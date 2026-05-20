@@ -1,0 +1,894 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PJ Area V2.0 - Hybrid Engine (Modular)</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;700&family=Space+Grotesk:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/src/styles/main.css">
+</head>
+<body style="height: 100dvh;" class="bg-surface text-on-surface/80 font-sans h-screen overflow-hidden flex flex-col">
+    <!-- Tutorial Backdrop -->
+    <div id="tutorialBackdrop" class="fixed inset-0 z-[101] hidden transition-opacity duration-300 ease-out opacity-0 pointer-events-none">
+        <div id="tutOverlayTop" class="absolute bg-black/80 pointer-events-auto"></div>
+        <div id="tutOverlayBottom" class="absolute bg-black/80 pointer-events-auto"></div>
+        <div id="tutOverlayLeft" class="absolute bg-black/80 pointer-events-auto"></div>
+        <div id="tutOverlayRight" class="absolute bg-black/80 pointer-events-auto"></div>
+    </div>
+    <div id="tutOverlayBorder" class="fixed border-2 border-primary pointer-events-none shadow-[0_0_30px_rgba(0,255,200,0.2)] z-[103] hidden"></div>
+    
+    <!-- Tutorial Box -->
+    <div id="tutorialBox" class="fixed z-[105] hidden flex-col bg-surface-low border border-outline-variant/15 rounded-none shadow-[0_20px_50px_rgba(0,0,0,0.8)] transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] opacity-0 translate-y-4">
+        <div id="tutBoxContent" class="flex flex-col p-4 md:p-6 w-full">
+            <div class="flex justify-between items-start mb-2 md:mb-3 pb-3 border-b border-outline-variant/20 gap-3">
+                <h3 id="tutTitle" class="text-primary font-bold text-base md:text-xl font-display tracking-tight flex items-center gap-2 flex-1 mt-1">
+                    <span id="tutIcon" class="bg-primary text-on-primary font-display text-surface-lowest w-5 h-5 rounded-none flex items-center justify-center text-[10px] shrink-0">1</span>
+                    Title
+                </h3>
+                <div class="flex items-center gap-2 shrink-0">
+                    <span id="tutStepBadge" class="text-[9px] font-mono font-bold text-on-surface/60 bg-surface-high border border-outline-variant/15 px-1.5 py-1 rounded-none whitespace-nowrap">1 / 7</span>
+                    <!-- Minimize Button -->
+                    <button id="tutMinBtn" class="text-on-surface/40 hover:text-on-surface p-1 transition-colors md:hidden" title="Minimize">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"/></svg>
+                    </button>
+                    <!-- Close Guide -->
+                    <button id="tutCloseBtn" class="text-on-surface/40 hover:text-rose-400 p-1 transition-colors md:hidden" title="Close Guide">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                    </button>
+                </div>
+            </div>
+            <p id="tutDesc" class="text-[11px] md:text-xs text-on-surface/80 leading-relaxed mb-3 md:mb-4 min-h-[50px] md:min-h-[60px]"></p>
+            <div class="flex justify-between items-center mt-auto">
+                <button id="tutPrev" class="text-[10px] md:text-xs font-bold text-on-surface/60 border border-neutral-600 hover:bg-neutral-700 hover:text-on-surface transition-colors px-3 py-1.5 rounded-none">Prev</button>
+                <div class="flex gap-2 ml-auto">
+                    <button id="tutQuit" class="text-[10px] md:text-xs text-rose-400/70 hover:text-rose-400 transition-colors px-3 py-1.5 hidden md:block">Quit Guide</button>
+                    <button id="tutNext" class="text-[11px] md:text-sm font-bold bg-primary hover:bg-primary text-on-primary uppercase font-display text-on-surface px-5 py-2 rounded-none transition-all shadow-none">Next ➔</button>
+                </div>
+            </div>
+        </div>
+        
+        <div id="tutBoxMinimized" class="hidden items-center justify-between gap-3 cursor-pointer p-3 w-[180px]">
+            <div class="flex items-center gap-2">
+                <span id="tutIconMin" class="bg-primary text-on-primary font-display text-surface-lowest w-5 h-5 rounded-none flex items-center justify-center text-[10px] shrink-0 animate-pulse">1</span>
+                <span class="text-xs font-bold font-display text-primary whitespace-nowrap">Tutorial Active</span>
+            </div>
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-on-surface/60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+        </div>
+    </div>
+
+    <!-- Header -->
+    <header class="h-auto min-h-[4rem] py-3 md:py-0 bg-surface flex items-center justify-between px-2 md:px-3 shrink-0 z-50 shadow-[0_4px_20px_rgba(0,0,0,0.4)] overflow-x-auto hide-scrollbar gap-3 md:gap-4">
+        <div class="flex items-center">
+            <div id="easterEggLogo" class="flex items-center gap-3 md:gap-4 group py-1 cursor-pointer pr-4 md:pr-0">
+                <!-- SVG Logo replaced with CSS pure geometry logo -->
+                <div class="relative w-[38px] h-[28px] transform shrink-0 group-hover:-translate-y-0.5 transition-transform duration-300" style="transform: skewY(14deg);">
+                    <!-- 점선 박스 (Dashed Box) -->
+                    <div class="absolute top-[6px] left-[15px] w-[22px] h-[20px] border border-dashed border-on-surface/50 box-border rounded-[1px] z-10"></div>
+                    
+                    <!-- 실선 박스 (Solid Box) -->
+                    <div class="absolute top-0 left-0 w-[22px] h-[20px] border-[1.5px] border-primary bg-surface box-border rounded-[1px] z-20"></div>
+                    
+                    <!-- 교차 영역 그라데이션 (Gradient Intersection) -->
+                    <div class="absolute top-[6px] left-[15px] w-[8px] h-[14px] bg-gradient-to-b from-[#8a52ff] to-[#5bb1ff] z-30"></div>
+                </div>
+                <div class="flex flex-col">
+                    <div class="flex gap-2">
+                        <span class="text-[15px] font-bold tracking-[0.25em] font-display text-primary uppercase leading-none mt-0.5">PJ</span>
+                        <span class="text-[15px] font-bold tracking-[0.25em] font-display text-on-surface uppercase leading-none mt-0.5">ΛREΛ</span>
+                    </div>
+                    <span class="text-[11px] text-on-surface/40 uppercase mt-1 tracking-[0.25em]">V2.0 Projection Calculation Tools</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="flex items-center gap-3 md:gap-4 shrink-0">
+            <!-- Tutorial -->
+            <button id="btnStartTut" class="text-[10px] bg-primary/20 text-primary border border-primary/30 hover:bg-primary hover:text-surface-lowest px-3 md:px-4 py-2 rounded-none transition-all uppercase tracking-wider font-bold shrink-0">Tutorial</button>
+
+            <div id="header-export-controls" class="hidden md:flex items-center gap-3 md:gap-4 shrink-0 flex-col md:flex-row w-full md:w-auto">
+                <!-- Active Canvas -->
+                <div class="flex flex-col px-0 md:px-4 md:border-r border-t md:border-t-0 py-4 md:py-0 border-b md:border-b-0 md:border-l border-outline-variant/30 justify-center text-center shrink-0 w-full md:w-auto">
+                    <span class="text-[8px] text-on-surface/40 uppercase tracking-[0.2em] mb-1">Active Canvas</span>
+                    <span id="desk-txtOutputRes" class="text-primary font-bold font-mono text-[16px] md:text-[14px] leading-none">--</span>
+                </div>
+
+                <!-- Target Surface Options -->
+                <div class="flex items-center gap-3 bg-surface-high border border-outline-variant/20 px-4 py-2 md:px-3 md:py-1.5 shrink-0 flex-wrap justify-center w-full md:w-auto">
+                    <label class="text-[11px] md:text-[9px] text-on-surface flex items-center gap-1.5 cursor-pointer hover:text-primary font-mono tracking-wider">
+                        <input type="radio" name="exportFmt" value="true" class="accent-primary w-4 h-4 md:w-3 md:h-3" checked> True Wall
+                    </label>
+                    <div class="w-px h-4 md:h-3 bg-outline-variant/30 hidden md:block"></div>
+                    <label class="text-[11px] md:text-[9px] text-on-surface flex items-center gap-1.5 cursor-pointer hover:text-primary font-mono tracking-wider">
+                        <input type="radio" name="exportFmt" value="total" class="accent-primary w-4 h-4 md:w-3 md:h-3"> Total Area
+                    </label>
+                    <div class="hidden md:block w-px h-3 bg-outline-variant/30"></div>
+                    <label class="text-[11px] md:text-[9px] text-orange-200 flex items-center gap-1.5 cursor-pointer hover:text-orange-400 font-mono tracking-wider w-full md:w-auto justify-center mt-2 md:mt-0">
+                        <input type="checkbox" id="chkExportBlend" class="accent-orange-500 w-4 h-4 md:w-3 md:h-3" checked> Blend Tint
+                    </label>
+                </div>
+                
+                <!-- Export Button -->
+                <div id="tutTarget_7" class="w-full md:w-auto mt-4 md:mt-0">
+                    <button id="btnExport" class="w-full md:w-auto bg-[var(--color-primary)] hover:bg-[#00e6b8] text-neutral-900 border-none font-bold text-[13px] md:text-[13px] tracking-widest py-3 md:py-2 px-3 md:px-4 transition-all shadow-[0_0_15px_rgba(0,255,200,0.3)] hover:shadow-[0_0_20px_rgba(0,255,200,0.5)] flex items-center justify-center gap-1.5 shrink-0 uppercase rounded-none">
+                        <span class="text-[15px] md:text-[16px] leading-none">&darr;</span> Export
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Easter Egg Modal -->
+    <div id="modal-easter-egg" class="fixed inset-0 bg-[#000000ee] backdrop-blur-md z-[300] hidden items-center justify-center opacity-0 transition-opacity duration-500 p-4">
+        <div class="text-center p-8 bg-surface border border-primary/30 shadow-[0_0_50px_rgba(0,255,200,0.2)] rounded transform scale-90 transition-transform duration-500" id="easter-egg-content">
+            <h2 class="text-3xl md:text-5xl font-display font-bold text-primary mb-4 md:mb-6 tracking-wider">사랑하는 사용자 여러분</h2>
+            <p class="text-xl md:text-2xl text-on-surface mb-3 md:mb-4">사랑하고 축복합니다. 항상 행복하시길 기도하겠습니다.</p>
+            <p class="text-sm md:text-md text-on-surface/60 font-mono tracking-widest mt-6 pt-6 border-t border-outline-variant/30">Dear users, we love and bless you. We will always pray for your happiness.</p>
+            <button id="btnEasterEggClose" class="mt-10 px-8 py-3 bg-primary text-on-primary font-bold tracking-widest uppercase hover:bg-primary/80 transition-colors">Close</button>
+        </div>
+    </div>
+    
+    <!-- Easter Egg Toast -->
+    <div id="toast-easter-egg" class="fixed bottom-10 left-1/2 -translate-x-1/2 bg-surface text-on-surface font-mono text-sm px-6 py-3 rounded-full shadow-lg z-[300] border border-outline-variant/30 opacity-0 pointer-events-none transition-opacity duration-300">
+        숨겨진 메세지까지 X단계 남았습니다.
+    </div>
+
+    <!-- Custom Setup Modal -->
+    <div id="modal-custom-proj" class="fixed inset-0 bg-[#000000cc] backdrop-blur-sm z-[300] hidden items-center justify-center opacity-0 transition-all duration-300 p-4">
+        <div class="bg-surface border border-outline-variant/15 rounded-none shadow-[0_20px_60px_rgba(0,0,0,0.9),0_0_0_1px_rgba(34,211,238,0.2)] w-full max-w-[540px] overflow-hidden transform scale-95 transition-transform duration-300 flex flex-col max-h-[90vh]">
+            <div class="px-6 py-4  bg-surface-container flex justify-between items-center">
+                <h3 class="text-primary font-bold text-4xl font-display font-display tracking-wide flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-none bg-primary text-on-primary uppercase font-display shadow-[0_0_8px_var(--color-primary)]"></span>
+                    Custom Hardware Setup
+                </h3>
+                <button id="btn-close-modal" class="text-on-surface/40 hover:text-on-surface transition-colors">✕</button>
+            </div>
+            
+            <div class="p-4 md:p-6 overflow-y-auto hide-scrollbar space-y-4 md:space-y-6 flex-1 min-h-0">
+                <!-- Projector Section -->
+                <div>
+                    <h4 class="text-[10px] text-on-surface/40 uppercase tracking-normal font-display font-bold mb-2 md:mb-3  pb-2">1. Projector Specs</h4>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-3 md:gap-4">
+                        <label class="block">
+                            <span class="text-[10px] text-on-surface/60 block mb-1">Brightness (Lumens)</span>
+                            <input type="number" id="inpC-lumens" class="input-base w-full text-center" value="10000" min="100">
+                        </label>
+                        <label class="block">
+                            <span class="text-[10px] text-on-surface/60 block mb-1">Resolution W (px)</span>
+                            <input type="number" id="inpC-resW" class="input-base w-full text-center" value="1920" min="1">
+                        </label>
+                        <label class="block">
+                            <span class="text-[10px] text-on-surface/60 block mb-1">Resolution H (px)</span>
+                            <input type="number" id="inpC-resH" class="input-base w-full text-center" value="1080" min="1">
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Lens Section -->
+                <div>
+                    <h4 class="text-[10px] text-on-surface/40 uppercase tracking-normal font-display font-bold mb-2 md:mb-3  pb-2">2. Lens Specs</h4>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-3 md:gap-4 mb-3 md:mb-4">
+                        <label class="block">
+                            <span class="text-[10px] text-on-surface/60 block mb-1">Throw Ratio (Min)</span>
+                            <input type="number" id="inpC-trMin" class="input-base w-full text-center" value="1.50" step="0.01">
+                        </label>
+                        <label class="block">
+                            <span class="text-[10px] text-on-surface/60 block mb-1">Throw Ratio (Max)</span>
+                            <input type="number" id="inpC-trMax" class="input-base w-full text-center" value="2.00" step="0.01">
+                            <p class="text-[8px] text-orange-400/80 mt-1">* For fixed lens, set same as Min</p>
+                        </label>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-3 md:gap-4">
+                        <div class="bg-surface-container p-3 rounded-none border border-outline-variant/15">
+                            <span class="text-[10px] text-on-surface/60 block mb-1.5 md:mb-2 text-center">Vertical Shift (%)</span>
+                            <div class="flex gap-2">
+                                <label class="w-1/2">
+                                    <span class="text-[9px] text-on-surface/40 block text-center mb-1">UP (e.g. 50)</span>
+                                    <input type="number" id="inpC-vUp" class="input-base w-full text-center text-sm" value="50">
+                                </label>
+                                <label class="w-1/2">
+                                    <span class="text-[9px] text-on-surface/40 block text-center mb-1">DOWN (e.g. -50)</span>
+                                    <input type="number" id="inpC-vDown" class="input-base w-full text-center text-sm" value="-50">
+                                </label>
+                            </div>
+                        </div>
+                        <div class="bg-surface-container p-3 rounded-none border border-outline-variant/15">
+                            <span class="text-[10px] text-on-surface/60 block mb-1.5 md:mb-2 text-center">Horizontal Shift (%)</span>
+                            <div class="flex gap-2">
+                                <label class="w-1/2">
+                                    <span class="text-[9px] text-on-surface/40 block text-center mb-1">RIGHT (e.g. 20)</span>
+                                    <input type="number" id="inpC-hRight" class="input-base w-full text-center text-sm" value="20">
+                                </label>
+                                <label class="w-1/2">
+                                    <span class="text-[9px] text-on-surface/40 block text-center mb-1">LEFT (e.g. -20)</span>
+                                    <input type="number" id="inpC-hLeft" class="input-base w-full text-center text-sm" value="-20">
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="p-4 border-t border-outline-variant/15 bg-surface-container flex justify-end gap-3">
+                <button id="btn-cancel-custom" class="px-5 py-2 rounded-none text-xs font-bold text-on-surface/60 hover:text-on-surface hover:bg-neutral-800 transition-colors">Cancel</button>
+                <button id="btn-save-custom" class="px-6 py-2 rounded-none text-sm font-bold bg-primary hover:bg-primary text-on-primary uppercase font-display text-on-surface shadow-none transition-colors">Apply Config</button>
+            </div>
+        </div>
+    </div>
+
+    <main class="flex flex-col md:flex-row flex-1 relative overflow-hidden pb-[60px] md:pb-0">
+
+        <!-- Settings Panel -->
+        <aside class="order-2 md:order-1 w-full md:w-[380px] flex-[6] md:flex-none md:h-full bg-surface-low border-t md:border-t-0 md:border-r border-outline-variant/30 overflow-y-auto hide-scrollbar flex flex-col z-20 shadow-[0_-10px_30px_rgba(0,0,0,0.3)] md:shadow-none min-h-0">
+            <!-- Mode Selector Tabs -->
+            
+            <div class="hidden md:flex shrink-0 sticky top-0 bg-surface-low z-30">
+                <button id="btnModeSettings" class="flex-1 py-2 md:py-3 text-[10px] font-bold uppercase tracking-normal font-display text-primary border-b-2 border-b-[var(--color-primary)] border-t-transparent border-x-transparent transition-all bg-primary/5">
+                    Settings
+                </button>
+                <button id="btnModeMapping" class="flex-1 py-2 md:py-3 text-[10px] font-bold uppercase tracking-normal font-display text-on-surface/40 hover:text-on-surface/80 transition-all border-b-2 border-transparent border-t-transparent border-x-transparent">
+                    Mapping
+                </button>
+                <button id="btnModeOptical" class="flex-1 py-2 md:py-3 text-[10px] font-bold uppercase tracking-normal font-display text-on-surface/40 hover:text-on-surface/80 transition-all border-b-2 border-transparent border-t-transparent border-x-transparent">
+                    Optical
+                </button>
+                <button id="btnModeOutput" class="flex-1 py-2 md:py-3 text-[10px] font-bold uppercase tracking-normal font-display text-on-surface/40 hover:text-on-surface/80 transition-all border-b-2 border-transparent border-t-transparent border-x-transparent">
+                    Output
+                </button>
+            </div>
+
+            <!-- MAPPING INPUTS -->
+            
+            <div id="panel-settings" class="flex flex-col flex-1 pb-16">
+                <div class="p-4 md:p-6 pb-2" id="tutTarget_settings">
+                    <div class="flex justify-between items-center cyber-group-header hidden">
+                        <h2 class="text-[10px] font-bold text-on-surface/40 uppercase tracking-[0.2em] hidden">HARDWARE_IDENTITY</h2>
+                        <span class="text-[10px] font-mono text-primary hidden">001</span>
+                    </div>
+                    <div id="settings-projector-content" class="flex flex-col gap-3 md:gap-4">
+<div id="tutTarget_1" class="bg-surface-high border border-outline-variant/15 p-4 mb-3 md:mb-4 relative z-0"><h2 class="text-[10px] text-on-surface/40 uppercase tracking-[0.2em] font-bold mb-3 md:mb-4">PHYSICAL WALL SIZE (mm)</h2>
+                    <div class="flex gap-3 md:gap-4 mb-3 md:mb-4">
+                        <label class="flex-1 block">
+                            <span class="text-[10px] text-on-surface/60 uppercase tracking-wider block mb-1">Wall W (mm)</span>
+                            <input type="number" id="inpWallW" class="input-base w-full text-center text-4xl font-display font-display" value="10000">
+                        </label>
+                        <label class="flex-1 block">
+                            <span class="text-[10px] text-on-surface/60 uppercase tracking-wider block mb-1">Wall H (mm)</span>
+                            <input type="number" id="inpWallH" class="input-base w-full text-center text-4xl font-display font-display" value="3000">
+                        </label>
+                    </div>
+                    <div class="bg-surface-container p-3 rounded-none flex justify-between items-center border border-outline-variant/15">
+                        <span class="text-xs text-on-surface/60">Target Aspect Ratio</span>
+                        <span class="text-sm font-mono text-on-surface font-bold" id="valWallAR">3.333:1</span>
+                    </div>
+                </div>
+
+                </div>
+                         <div id="bottom-spec-moved" class="flex flex-col gap-6 hide-scrollbar w-full">
+                
+                <!-- Projector Selection & Image -->
+                <div class="flex items-start gap-3 md:gap-4 md:gap-5 w-full md:w-[320px] shrink-0">
+                    <!-- Image Box -->
+                    <div class="w-[80px] h-[80px] md:w-[96px] md:h-[96px] flex flex-col items-center justify-center shrink-0 relative group">
+                        <svg class="w-8 h-8 md:w-10 md:h-10 text-on-surface/20 absolute z-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="7" cy="7" r="4"/><circle cx="16" cy="7" r="4"/><circle cx="7" cy="7" r="1"/><circle cx="16" cy="7" r="1"/><rect x="5" y="11" width="13" height="9" rx="2"/><path d="M18 14l4-2v5l-4-2"/><path d="M8 20v2h7v-2"/></svg>
+                        <img id="bp-image" src="projector.png" onerror="this.style.display='none'; this.previousElementSibling.style.display='block';" onload="this.previousElementSibling.style.display='none';" alt="Projector" class="absolute inset-0 w-full h-full object-cover z-10 hidden border-none outline-none ring-0 drop-shadow-[0_4px_12px_rgba(0,0,0,0.5)]">
+                    </div>
+                    
+                    <!-- Selection Dropdown -->
+                    <div class="flex flex-col flex-1 max-w-[200px] md:max-w-none">
+                        <div class="flex items-center justify-between mb-2 md:mb-3 w-full">
+                            <span class="text-[10px] text-on-surface/60 uppercase tracking-[0.2em] font-bold flex items-center gap-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 7h14A2 2 0 0 1 21 9v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2Z"/><path d="M9 7V3h6v4"/><circle cx="8" cy="13" r="2"/><path d="M16 13h2"/></svg>
+                                Projector Model
+                            </span>
+                            <button id="btn-edit-custom-proj" class="h-6 w-6 bg-surface-high border border-outline-variant/15 rounded-none text-on-surface/60 hover:text-primary hover:border-primary transition-colors flex items-center justify-center hidden" title="Edit Custom Setup">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+                            </button>
+                        </div>
+                        <div class="relative">
+                            <select id="bp-sel-proj" class="w-full text-[13px] md:text-base bg-surface-high border border-outline-variant/15 text-on-surface font-bold rounded-none pl-2 md:pl-3 pr-6 py-2.5 focus:outline-none focus:border-tertiary focus:ring-0 hover:border-neutral-500 transition-all cursor-pointer appearance-none shadow-inner"></select>
+                            <div class="absolute inset-y-0 right-2 flex items-center pointer-events-none">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Core Specs -->
+                <div class="flex flex-col min-w-[200px] w-full md:w-auto mt-4 md:mt-0 pt-4 md:pt-0 border-t md:border-t-0 md:border-l border-outline-variant/15 md:pl-8">
+                    <span class="text-[10px] text-on-surface/40 uppercase tracking-[0.2em] font-bold mb-3 md:mb-4">Core Specifications</span>
+                    <div class="grid grid-cols-2 gap-x-6 gap-y-3">
+                        <div>
+                            <span class="text-[9px] text-on-surface/40 block mb-0.5">Light Output</span>
+                            <div class="flex items-end gap-1">
+                                <span id="bp-lumens" class="text-base font-bold text-on-surface leading-none">--</span>
+                                <span class="text-[8px] text-on-surface/20 font-bold mb-0.5">LM</span>
+                            </div>
+                        </div>
+                        <div>
+                            <span class="text-[9px] text-on-surface/40 block mb-0.5">Aspect Ratio</span>
+                            <div class="flex items-center gap-2">
+                                <div class="text-sm font-bold text-on-surface leading-none mt-0.5" id="bp-ar">--</div>
+                                <button id="bp-btn-rotate" class="text-on-surface/60 hover:text-primary transition-colors focus:outline-none" title="Rotate 90 degrees">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M21 13a9 9 0 1 1-3-7.7L21 8"/></svg>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-span-2 border-t border-outline-variant/15 pt-2.5 mt-1 w-full">
+                            <div class="flex flex-col items-start overflow-hidden">
+                                <span class="text-[9px] text-on-surface/40 block mb-1.5 h-[14px]">Target Resolution</span>
+                                <div class="flex items-center bg-surface-high border border-outline-variant/15 rounded-none p-0.5 w-max h-[26px]">
+                                    <button id="bp-btn-res-native" class="px-2 md:px-3 py-1 text-[9px] md:text-[10px] font-bold bg-surface-highest text-primary rounded-none shadow-sm transition-all focus:outline-none whitespace-nowrap">Native</button>
+                                    <button id="bp-btn-res-half" class="px-2 md:px-3 py-1 text-[9px] md:text-[10px] font-bold text-on-surface/40 hover:text-on-surface/80 rounded-none transition-all focus:outline-none whitespace-nowrap">Half Res</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Hardware Profile -->
+                <div class="flex flex-col min-w-[220px] w-full md:w-auto mt-4 md:mt-0 pt-4 md:pt-0 border-t md:border-t-0 md:border-l border-outline-variant/15 md:pl-8">
+                    <span class="text-[10px] text-on-surface/40 uppercase tracking-[0.2em] font-bold mb-3 md:mb-4">Hardware Profile</span>
+                    <div class="grid grid-cols-2 gap-x-6 gap-y-3">
+                        <div>
+                            <span class="text-[9px] text-on-surface/40 block mb-0.5">Brand</span>
+                            <div class="text-[11px] font-bold text-primary leading-none mt-0.5 max-w-full truncate" id="bp-brand">--</div>
+                        </div>
+                        <div>
+                            <span class="text-[9px] text-on-surface/40 block mb-0.5">Display Type</span>
+                            <div class="text-[11px] font-bold text-on-surface leading-none mt-0.5" id="bp-type">--</div>
+                        </div>
+                        <div>
+                            <span class="text-[9px] text-on-surface/40 block mb-0.5">Unit Weight</span>
+                            <div class="text-[11px] font-bold text-on-surface leading-none mt-0.5" id="bp-weight">--</div>
+                        </div>
+                        <div>
+                            <span class="text-[9px] text-on-surface/40 block mb-0.5">Power Max</span>
+                            <div class="text-[11px] font-bold text-on-surface leading-none mt-0.5" id="bp-power">--</div>
+                        </div>
+                        <div>
+                            <span class="text-[9px] text-on-surface/40 block mb-0.5">Dimensions</span>
+                            <div class="text-[10px] font-mono font-bold text-on-surface/60 leading-tight">
+                                <span id="bp-dim-w">--</span> W ×
+                                <span id="bp-dim-h">--</span> H ×
+                                <span id="bp-dim-d">--</span> D
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Lens Info -->
+                <div class="flex flex-col min-w-[240px] w-full md:w-auto mt-4 md:mt-0 pt-4 md:pt-0 border-t md:border-t-0 md:border-l border-outline-variant/15 md:pl-8">
+                    <span class="text-[10px] text-on-surface/60 uppercase tracking-[0.2em] font-bold mb-2 md:mb-3 flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
+                        Selected Lens
+                    </span>
+                    <div class="relative mb-1.5 md:mb-2">
+                        <select id="bp-sel-lens" class="w-full bg-surface-high border border-outline-variant/15 text-primary text-base font-bold rounded-none pl-3 pr-8 py-2.5 focus:outline-none focus:border-tertiary focus:ring-0 hover:border-neutral-500 transition-all cursor-pointer appearance-none shadow-inner"></select>
+                         <div class="absolute inset-y-0 right-3 flex items-center pointer-events-none">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                        </div>
+                    </div>
+                    <div class="text-[10px] text-on-surface/60 font-mono mt-1 bg-surface-highest/50 px-2 py-1.5 rounded-none border border-outline-variant/15 inline-flex self-start items-center gap-1.5" id="bp-lens-tr">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 text-on-surface/40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+                        TR: --
+                    </div>
+                </div>
+                
+            </div>
+        </div>
+        </div>
+
+            <div id="panel-mapping" class="hidden flex flex-col">
+                <div class="p-4 md:p-6 pb-2 hidden" id="tutTarget_2">
+                    <h2 class="text-[11px] text-on-surface/80 uppercase tracking-[0.2em] font-bold flex items-center gap-2 mb-3 md:mb-4">
+                        <span class="w-1.5 h-1.5 bg-neutral-500 rounded-none inline-block"></span>
+                        Custom Resolution
+                    </h2>
+                    <div class="flex items-end gap-2 mb-3 md:mb-4">
+                        <label class="flex-1 block">
+                            <span class="text-[10px] text-on-surface/60 uppercase tracking-wider block mb-1">Proj Width</span>
+                            <input type="number" id="inpW" class="input-base w-full text-center text-base" value="1920">
+                        </label>
+                        <button id="btnSwapRes" class="mb-1 p-2 bg-[var(--color-outline-variant)] hover:bg-primary border border-outline-variant/30 hover:border-primary rounded-none text-on-surface/80 hover:text-primary transition-colors flex items-center justify-center shrink-0 h-[38px] w-[38px] shadow-sm transform hover:scale-105 active:scale-95">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M8 3 4 7l4 4" /> <path d="M4 7h16" /> <path d="m16 21 4-4-4-4" /> <path d="M20 17H4" />
+                            </svg>
+                        </button>
+                        <label class="flex-1 block">
+                            <span class="text-[10px] text-on-surface/60 uppercase tracking-wider block mb-1">Proj Height</span>
+                            <input type="number" id="inpH" class="input-base w-full text-center text-base" value="1080">
+                        </label>
+                    </div>
+                </div>
+
+                <div class="p-4 md:p-6 pb-2" id="tutTarget_3">
+                    <h2 class="text-[11px] text-primary uppercase tracking-[0.2em] font-bold flex items-center gap-2 mb-3 md:mb-4">
+                        <span class="w-1.5 h-1.5 bg-primary text-on-primary uppercase font-display rounded-none inline-block shadow-none"></span>
+                        Overlap Control
+                    </h2>
+                    <div class="mb-5 bg-surface-lowest p-4 rounded-none border border-outline-variant/15">
+                        <div class="flex justify-between items-center mb-2 md:mb-3">
+                            <span class="text-[10px] text-on-surface/60 uppercase tracking-wider">Horizontal Blend (X)</span>
+                            <div class="flex gap-2 items-center">
+                                <span id="lblOxSlider" class="text-on-surface font-mono font-bold text-sm">192 px</span>
+                                <span id="badgeOxPct" class="px-2 py-0.5 rounded-none text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/50">10.0%</span>
+                            </div>
+                        </div>
+                        <input type="range" id="sliderOx" class="w-full slider-custom" min="0" max="1920" value="192">
+                    </div>
+                    <div class="mb-3 md:mb-4 bg-surface-lowest p-4 rounded-none border border-outline-variant/15">
+                        <div class="flex justify-between items-center mb-2 md:mb-3">
+                            <span class="text-[10px] text-on-surface/60 uppercase tracking-wider">Vertical Blend (Y)</span>
+                            <div class="flex gap-2 items-center">
+                                <span id="lblOySlider" class="text-on-surface font-mono font-bold text-sm">0 px</span>
+                                <span id="badgeOyPct" class="px-2 py-0.5 rounded-none text-[10px] font-bold bg-orange-500/20 text-orange-400 border border-orange-500/50">0.0%</span>
+                            </div>
+                        </div>
+                        <input type="range" id="sliderOy" class="w-full slider-custom" min="0" max="1080" value="0">
+                    </div>
+                </div>
+
+                <div class="p-4 md:p-6">
+                    <div id="tutTarget_4" class="-m-4 md:-m-6 p-4 md:p-6 mb-1.5 md:mb-2 rounded border border-transparent tutorial-target-box">
+                         <div class="flex justify-between items-center mb-3 md:mb-4">
+                            <h2 class="text-[11px] text-rose-400 uppercase tracking-[0.2em] font-bold flex items-center gap-2">
+                                <span class="w-1.5 h-1.5 bg-rose-400 inline-block shadow-none"></span>
+                                Array Settings
+                            </h2>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3 md:gap-4">
+                            <div class="bg-surface-container p-4 border border-outline-variant/15 rounded-none relative overflow-hidden">
+                                <div class="absolute top-0 right-0 p-2">
+                                    <label class="text-[9px] text-on-surface/60 flex items-center gap-1 cursor-pointer hover:text-on-surface group">
+                                        <span class="uppercase tracking-wider group-hover:text-rose-400 font-bold">Lock X</span>
+                                        <input type="radio" name="axisLock" value="X" class="accent-rose-500 w-3 h-3">
+                                    </label>
+                                </div>
+                                <span class="text-[10px] text-on-surface/40 tracking-normal font-display uppercase block mb-2 md:mb-3">Cols (P)</span>
+                                <input type="number" id="inpP" class="input-base w-full text-center text-4xl font-display font-display bg-transparent border-neutral-700" value="2" min="1">
+                            </div>
+                            <div class="bg-surface-container p-4 border border-outline-variant/15 rounded-none relative overflow-hidden">
+                                <div class="absolute top-0 right-0 p-2">
+                                    <label class="text-[9px] text-on-surface/60 flex items-center gap-1 cursor-pointer hover:text-on-surface group">
+                                        <span class="uppercase tracking-wider group-hover:text-rose-400 font-bold">Lock Y</span>
+                                        <input type="radio" name="axisLock" value="Y" class="accent-rose-500 w-3 h-3" checked>
+                                    </label>
+                                </div>
+                                <span class="text-[10px] text-on-surface/40 tracking-normal font-display uppercase block mb-2 md:mb-3">Rows (R)</span>
+                                <input type="number" id="inpR" class="input-base w-full text-center text-4xl font-display font-display bg-transparent border-neutral-700" value="1" min="1">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="tutTarget_5" class="bg-transparent border border-primary/30 rounded-none p-4 mb-4 md:mb-6">
+                        <h2 class="text-[10px] text-primary uppercase tracking-normal font-display mb-2 md:mb-3 text-center">True Wall Resolution</h2>
+                        <div class="flex items-center justify-center gap-3">
+                            <span id="txtTrueW" class="text-on-surface font-mono font-bold text-4xl font-display">--</span>
+                            <span class="text-primary font-light">&times;</span>
+                            <span id="txtTrueH" class="text-on-surface font-mono font-bold text-4xl font-display">--</span>
+                        </div>
+                        <div class="mt-3 pt-3 border-t border-primary/30 flex items-center justify-between text-[10px]">
+                            <span class="text-on-surface/60">Physical Scale:</span>
+                            <div><span id="txtPxToMm" class="font-mono text-primary font-bold text-base">0.00</span><span class="text-on-surface/40 ml-1">mm/px</span></div>
+                        </div>
+                        <input type="hidden" id="inpTW">
+                        <input type="hidden" id="inpTH">
+                    </div>
+
+                    <div id="tutTarget_6" class="p-4 md:p-6 pb-6 md:pb-8">
+                        <h2 class="text-[10px] text-on-surface/40 uppercase tracking-normal font-display mb-1.5 md:mb-2 md:mb-2 md:mb-3">Options</h2>
+                        <div class="grid grid-cols-2 gap-x-2 gap-y-1.5 md:gap-2 mb-3 md:mb-4">
+                            <label class="flex items-center gap-1.5 text-[11px]"><input type="checkbox" id="chkCircles" class="checkbox-custom" checked> Circles</label>
+                            <label class="flex items-center gap-1.5 text-[11px]"><input type="checkbox" id="chkGrid" class="checkbox-custom" checked> Square Grid</label>
+                            <label class="flex items-center gap-1.5 text-[11px]"><input type="checkbox" id="chkProjInfo" class="checkbox-custom" checked> Info</label>
+                            <label class="flex items-center gap-1.5 text-[11px] text-rose-300 font-bold"><input type="checkbox" id="chkColorGrid" class="checkbox-custom"> Color Grid</label>
+                            <label class="flex items-center gap-1.5 text-[11px] text-yellow-400 font-bold col-span-2 md:col-span-1 mt-1 md:mt-2"><input type="checkbox" id="chkQuickPattern" class="checkbox-custom" title="Ignores missing area and covers with color grid, removes blend/info"> Quick Pattern</label>
+                        </div>
+                        
+                        <h2 class="text-[10px] text-on-surface/40 uppercase tracking-normal font-display mb-1.5 md:mb-2 md:mb-2 md:mb-3 mt-4 md:mt-5">Custom Guide</h2>
+                        <input type="text" id="inpProjName" class="input-base w-full text-sm !py-1.5 mb-1.5 md:mb-2" value="PJ Area" placeholder="Project Name">
+                        <div class="flex items-center gap-2 mb-1.5 md:mb-2">
+                            <input type="file" id="inpSvgUpload" accept=".svg,image/svg+xml" class="hidden">
+                            <button id="btnSvgUpload" class="flex-1 bg-surface-high hover:bg-[var(--color-outline-variant)] text-on-surface/80 text-xs py-1.5 rounded-none transition-colors text-center border border-neutral-600 border-outline-variant/15ashed cursor-pointer">
+                                + Upload SVG Layer
+                            </button>
+                            <button id="btnSvgClear" class="hidden px-3 bg-rose-900/50 hover:bg-rose-900 text-rose-300 text-xs py-1.5 rounded-none transition-colors border border-rose-800 cursor-pointer">
+                                Clear
+                            </button>
+                        </div>
+                        <div id="svgControls" class="hidden flex-col gap-2 mb-3 md:mb-4 bg-surface-highest/50 p-2 rounded-none border border-outline-variant/15">
+                            <div class="flex items-center gap-2">
+                                <span class="text-[9px] text-on-surface/40 w-12">Scale %</span>
+                                <input type="range" id="sliderSvgScale" min="10" max="500" value="100" class="slider-custom flex-1">
+                                <input type="number" id="inpSvgScale" class="input-base w-16 text-xs !py-1" value="100" step="1">
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="text-[9px] text-on-surface/40 w-12">W (Px)</span>
+                                <input type="range" id="sliderSvgTargetW" min="1" max="2000" value="0" class="slider-custom flex-1">
+                                <input type="number" id="inpSvgTargetW" class="input-base w-16 text-xs !py-1" value="0" step="1">
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="text-[9px] text-on-surface/40 w-12">X (Px)</span>
+                                <input type="range" id="sliderSvgX" min="-1000" max="5000" value="0" class="slider-custom flex-1">
+                                <input type="number" id="inpSvgX" class="input-base w-16 text-xs !py-1" value="0" step="1">
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="text-[9px] text-on-surface/40 w-12">Y (Px)</span>
+                                <input type="range" id="sliderSvgY" min="-1000" max="5000" value="0" class="slider-custom flex-1">
+                                <input type="number" id="inpSvgY" class="input-base w-16 text-xs !py-1" value="0" step="1">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- OPTICAL INPUTS -->
+            <div id="panel-output" class="hidden flex flex-col flex-1 pb-16 overflow-y-auto">
+                <!-- output panel contents will be injected here on mobile -->
+            </div>
+
+            <div id="panel-optical" class="hidden flex flex-col">
+                <div class="p-4 md:p-6">
+                    <div id="optTutTarget_1" class="-m-4 md:-m-6 p-4 md:p-6 mb-3 md:mb-4 rounded border border-transparent tutorial-target-box">
+                        <div class="flex justify-between items-center mb-3 md:mb-4">
+                            <h2 class="text-[11px] text-primary uppercase tracking-[0.2em] font-bold flex items-center gap-2">
+                                <span class="w-1.5 h-1.5 bg-primary text-on-primary uppercase font-display rounded-none inline-block"></span>
+                                Optical Calculator
+                            </h2>
+                        </div>
+
+                        <div class="space-y-3 md:space-y-6 mb-5 md:mb-8">
+                            <div class="relative group">
+                            <div class="flex justify-between items-center text-[10px] uppercase tracking-normal font-display mb-1.5 md:mb-2">
+                                <span class="text-on-surface/60 font-bold">Throw Distance</span>
+                                <span class="text-on-surface font-mono" id="opt-val-dist-m">5.00m</span>
+                            </div>
+                            <div class="relative h-6 flex items-center">
+                                <div id="opt-range-bar-dist" class="absolute h-1.5 bg-primary/30 rounded-none transition-all duration-300 pointer-events-none"></div>
+                                <div class="absolute h-3 w-[2px] bg-red-500/50 left-[80%] -translate-x-1/2 pointer-events-none z-0" title="100 Nits Brightness Limit"></div>
+                                <input type="range" id="opt-slider-dist" class="slider-custom w-full relative z-10 !bg-transparent" min="0" max="100" step="0.01" value="50">
+                            </div>
+                            <div class="flex justify-between text-[8px] text-on-surface/20 mt-1">
+                                <span id="opt-range-dist-min">0.5m</span>
+                                <span id="opt-range-dist-max">30m</span>
+                            </div>
+                        </div>
+
+                        <div class="relative group">
+                            <div class="flex justify-between items-center text-[10px] uppercase tracking-normal font-display mb-1.5 md:mb-2">
+                                <span class="text-on-surface/60 font-bold">Image Width</span>
+                                <span class="text-on-surface font-mono" id="opt-val-width-m">3.13m</span>
+                            </div>
+                            <div class="relative h-6 flex items-center">
+                                <div id="opt-range-bar-width" class="absolute h-1.5 bg-primary/30 rounded-none transition-all duration-300 pointer-events-none"></div>
+                                <div class="absolute h-3 w-[2px] bg-red-500/50 left-[80%] -translate-x-1/2 pointer-events-none z-0" title="100 Nits Brightness Limit"></div>
+                                <input type="range" id="opt-slider-width" class="slider-custom w-full relative z-10 !bg-transparent" min="0" max="100" step="0.01" value="50">
+                            </div>
+                            <div class="flex justify-between text-[8px] text-on-surface/20 mt-1">
+                                <span id="opt-range-width-min">0.5m</span>
+                                <span id="opt-range-width-max">20m</span>
+                            </div>
+                        </div>
+
+                        <div>
+                            <div class="flex justify-between items-center text-[10px] uppercase tracking-normal font-display mb-1.5 md:mb-2">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-primary font-bold">Zoom Range</span>
+                                    <label class="cursor-pointer text-on-surface/20 hover:text-primary transition-colors" title="Lock Zoom">
+                                        <input type="checkbox" id="opt-lock-zoom" class="hidden peer" checked>
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 peer-checked:hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 hidden peer-checked:inline text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                                    </label>
+                                    <span id="opt-zoom-factor" class="text-[9px] text-on-surface/40 lowercase">(1.00x Tele)</span>
+                                </div>
+                                <span id="opt-zoom-val" class="px-2 py-0.5 rounded-none bg-primary text-on-primary uppercase font-display text-surface-lowest font-bold font-mono text-[10px]">1.60</span>
+                            </div>
+                            <input type="range" id="opt-slider-zoom" class="slider-custom w-full" min="0.5" max="5" step="0.01" value="1.6">
+                            <div class="flex justify-between text-[8px] text-on-surface/20 mt-1 uppercase tracking-tighter">
+                                <span>Telephoto</span>
+                                <span>Wide Angle</span>
+                            </div>
+                        </div>
+                    </div>
+                    </div>
+
+                    <div id="optTutTarget_2" class="grid grid-cols-2 gap-2 md:gap-3 md:gap-4 mb-1.5 md:mb-2">
+                        <div class="bg-black/30 p-3 rounded-none border border-outline-variant/15">
+                            <span class="text-[9px] text-on-surface/40 uppercase block mb-1">Distance</span>
+                            <div class="flex items-center gap-2">
+                                <input type="number" id="opt-inp-dist" class="bg-transparent w-full text-on-surface font-mono font-bold text-4xl font-display font-display outline-none" value="5.0">
+                                <span class="text-[10px] text-on-surface/20">m</span>
+                            </div>
+                        </div>
+                        <div class="bg-black/30 p-3 rounded-none border border-outline-variant/15">
+                            <span class="text-[9px] text-on-surface/40 uppercase block mb-1">Width</span>
+                            <div class="flex items-center gap-2">
+                                <input type="number" id="opt-inp-width" class="bg-transparent w-full text-on-surface font-mono font-bold text-4xl font-display font-display outline-none" value="3.13">
+                                <span class="text-[10px] text-on-surface/20">m</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Lens Shift -->
+                <div id="optTutTarget_3" class="p-4 md:p-6">
+                    <h3 class="text-[10px] text-on-surface/60 uppercase tracking-[0.2em] font-bold mb-4 md:mb-6 flex justify-between items-center">
+                        Lens Shift & Mount
+                        <span id="opt-header-mode" class="text-primary font-bold uppercase tracking-widest text-[9px]">STANDARD FRONT</span>
+                    </h3>
+                    <div class="space-y-4 md:space-y-6 mb-4 md:mb-6">
+                        <div>
+                            <div class="flex justify-between items-center mb-1.5 md:mb-2">
+                                <span class="text-[9px] text-on-surface/40 uppercase">Vertical Shift</span>
+                                <div class="text-right">
+                                    <div id="opt-txt-sv-m" class="text-[10px] text-on-surface font-mono">+0.00m</div>
+                                    <div id="opt-txt-sv" class="text-[9px] text-primary font-bold font-mono leading-none">0%</div>
+                                </div>
+                            </div>
+                            <input type="range" id="opt-slider-sv" class="slider-custom w-full" min="-100" max="100" value="0">
+                        </div>
+                        <div>
+                            <div class="flex justify-between items-center mb-1.5 md:mb-2">
+                                <span class="text-[9px] text-on-surface/40 uppercase">Horizontal Shift</span>
+                                <div class="text-right">
+                                    <div id="opt-txt-sh-m" class="text-[10px] text-on-surface font-mono">+0.00m</div>
+                                    <div id="opt-txt-sh" class="text-[9px] text-primary font-bold font-mono leading-none">0%</div>
+                                </div>
+                            </div>
+                            <input type="range" id="opt-slider-sh" class="slider-custom w-full" min="-100" max="100" value="0">
+                        </div>
+                    </div>
+                    <button id="opt-btn-ceiling" class="w-full py-3 bg-surface-high hover:bg-primary border border-outline-variant/15 rounded-none text-[10px] text-on-surface/60 hover:text-on-surface uppercase font-bold tracking-[0.1em] transition-all shadow-sm hidden">Toggle Ceiling Mount</button>
+                </div>
+                
+                <div class="p-4 md:p-6">
+                    <div class="grid grid-cols-3 gap-1 md:gap-2 mb-4 md:mb-6">
+                        <div class="bg-surface-highest/50 p-2 rounded-none border border-outline-variant/15">
+                            <p class="text-[8px] text-on-surface/40 uppercase tracking-tighter">Diagonal</p>
+                            <p id="opt-txt-diag" class="text-4xl font-display font-display font-bold text-on-surface leading-none">120<span class="text-[10px] font-normal text-on-surface/20">"</span></p>
+                        </div>
+                        <div class="bg-surface-highest/50 p-2 rounded-none border border-outline-variant/15">
+                            <p class="text-[8px] text-on-surface/40 uppercase tracking-tighter">Width</p>
+                            <p id="opt-txt-width-res" class="text-4xl font-display font-display font-bold text-primary leading-none">2.81<span class="text-[10px] font-normal text-on-surface/20">m</span></p>
+                        </div>
+                        <div class="bg-surface-highest/50 p-2 rounded-none border border-outline-variant/15">
+                            <p class="text-[8px] text-on-surface/40 uppercase tracking-tighter">Height</p>
+                            <p id="opt-txt-height" class="text-4xl font-display font-display font-bold text-on-surface leading-none">1.75<span class="text-[10px] font-normal text-on-surface/20">m</span></p>
+                        </div>
+                    </div>
+                    <div id="optTutTarget_4" class="bg-surface-highest/50 p-4 rounded-none border border-outline-variant/15 mb-4 md:mb-6">
+                        <div class="flex justify-between items-center text-[10px] mb-1.5 md:mb-2 uppercase tracking-normal font-display">
+                            <span class="text-on-surface/40">Estimated Brightness & Resolution</span>
+                            <div class="flex items-center gap-3">
+                                <span id="opt-txt-mmpx" class="text-primary font-bold text-sm">-- mm/px</span>
+                                <span id="opt-txt-lux" class="text-rose-500 font-bold text-sm"></span>
+                            </div>
+                        </div>
+                        <div class="h-1.5 rounded-none relative mb-2 md:mb-3" style="background: linear-gradient(to right, #ff2a5f 20%, #ffc107 40%, var(--color-primary) 80%, var(--color-tertiary) 100%);">
+                            <div id="opt-bar-lux" class="absolute top-1/2 -translate-y-1/2 -ml-1.5 w-4 h-4 border-outline-variant/15 border-neutral-900 rounded-none shadow-none transition-all duration-300 z-10 bg-current text-primary" style="left: 0%"></div>
+                        </div>
+                        <p id="opt-txt-lux-desc" class="text-[9px] text-on-surface/40 italic text-center">"Gauge range: 0 Nits to >500 Nits"</p>
+                    </div>
+
+                    <!-- Camera View Control (Activated) -->
+                    <div id="panel-cam-control" class="p-4 bg-transparent border border-primary/30 rounded-none hidden">
+                        <div class="flex justify-between items-center mb-3 md:mb-4">
+                            <h3 class="text-[10px] text-primary uppercase tracking-[0.2em] font-bold">Camera View Control</h3>
+                            <button id="btn-cam-reset" class="text-[9px] text-on-surface/40 hover:text-primary uppercase font-bold transition-colors">Reset View</button>
+                        </div>
+                        <div class="space-y-2 md:space-y-4">
+                            <label class="block">
+                                <div class="flex justify-between text-[9px] text-on-surface/40 mb-1">
+                                    <span class="uppercase">Rotate X (Tilt)</span>
+                                    <span id="txt-cam-rotX" class="text-primary font-bold">-25°</span>
+                                </div>
+                                <input type="range" id="slider-cam-rotX" class="slider-custom w-full" min="-90" max="90" value="-25">
+                            </label>
+                            <label class="block">
+                                <div class="flex justify-between text-[9px] text-on-surface/40 mb-1">
+                                    <span class="uppercase">Rotate Y (Pan)</span>
+                                    <span id="txt-cam-rotY" class="text-primary font-bold">60°</span>
+                                </div>
+                                <input type="range" id="slider-cam-rotY" class="slider-custom w-full" min="-180" max="180" value="60">
+                            </label>
+                            <label class="block">
+                                <div class="flex justify-between text-[9px] text-on-surface/40 mb-1">
+                                    <span class="uppercase">Zoom (Scale)</span>
+                                    <span id="txt-cam-zoom" class="text-primary font-bold">1x</span>
+                                </div>
+                                <input type="range" id="slider-cam-zoom" class="slider-custom w-full" min="0.1" max="3" step="0.1" value="1">
+                            </label>
+                            <div class="pt-2">
+                                <button id="btn-copy-cam" class="w-full bg-surface-high hover:bg-primary border border-outline-variant/15 py-2 rounded-none text-[10px] text-primary font-bold uppercase transition-all flex items-center justify-center gap-2">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                                    Reset to Default
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Right Viewport Area -->
+        <div id="rightViewport" class="order-1 md:order-2 flex-[4] md:flex-1 flex flex-col bg-surface relative min-h-0">
+            
+            <!-- Viewport Canvas Area -->
+            <section class="flex-1 relative overflow-hidden mapping-grid min-h-[200px] md:min-h-0">
+<div id="view-mapping" class="absolute inset-0 flex overflow-hidden pointer-events-none">
+                    <div id="canvas-wrapper" class="w-full h-full flex items-center justify-center transform origin-center transition-transform duration-75 pointer-events-auto cursor-grab active:cursor-grabbing" style="transform: scale(1) translate(0px, 0px);">
+                         <canvas id="mainCanvas" class="shadow-none pointer-events-none w-full h-full object-contain"></canvas>
+                    </div>
+                </div>
+                
+                <!-- Zoom Controls -->
+                <div id="zoom-controls" class="absolute bottom-4 right-4 z-20 flex flex-col gap-1 bg-surface border border-outline-variant/30 rounded shadow-lg overflow-hidden">
+                    <button id="btnZoomIn" class="w-8 h-8 flex items-center justify-center text-on-surface hover:bg-primary/20 hover:text-primary transition-colors">+</button>
+                    <div class="h-px w-full bg-outline-variant/30"></div>
+                    <button id="btnZoomOut" class="w-8 h-8 flex items-center justify-center text-on-surface hover:bg-primary/20 hover:text-primary transition-colors">-</button>
+                    <div class="h-px w-full bg-outline-variant/30"></div>
+                    <button id="btnZoomReset" class="w-8 h-8 flex items-center justify-center text-[10px] text-on-surface hover:bg-primary/20 hover:text-primary transition-colors font-mono">1:1</button>
+                </div>
+
+                <div id="view-optical" class="absolute inset-0 flex flex-col hidden pointer-events-none">
+                    <div id="optTutTarget_5" class="absolute top-[10px] right-2 md:top-6 md:right-6 flex bg-surface/80 border border-outline-variant/15 p-1 rounded-none z-[100] backdrop-blur pointer-events-auto shadow-2xl scale-90 md:scale-100 origin-top-right">
+                    <button id="btnView2D" class="px-2 md:px-4 py-1 md:py-1.5 rounded-none text-[9px] md:text-[10px] font-bold uppercase tracking-normal font-display transition-all bg-primary text-on-primary uppercase font-display text-surface-lowest shadow-none">2D Multi-View</button>
+                    <button id="btnView3D" class="px-2 md:px-4 py-1 md:py-1.5 rounded-none text-[9px] md:text-[10px] font-bold uppercase tracking-normal font-display text-on-surface/40 hover:text-on-surface/80 transition-all">3D Perspective</button>
+                </div>
+                <!-- 2D Container -->
+                <div id="opt-container-2d" class="grid grid-cols-2 gap-2 w-full h-full p-4 md:p-8 pointer-events-auto overflow-y-auto">
+                    <div class="relative bg-surface/40 border border-outline-variant/15/50 rounded-none overflow-hidden backdrop-blur-sm flex flex-col">
+                        <div class="absolute top-4 left-3 md:left-5 text-[8px] md:text-[14px] font-bold text-on-surface/80 uppercase tracking-widest z-10 drop-shadow-md whitespace-nowrap">SIDE VIEW (측면도)</div>
+                        <svg id="svg-side-view" class="w-full h-full" viewBox="0 0 500 500" preserveAspectRatio="xMidYMid meet">
+                            <defs>
+                                <linearGradient id="beam-grad-side" x1="0%" y1="0%" x2="100%" y2="0%">
+                                    <stop offset="0%" stop-color="var(--color-primary)" stop-opacity="0.3" /><stop offset="100%" stop-color="var(--color-primary)" stop-opacity="0" />
+                                </linearGradient>
+                            </defs>
+                            
+                            <path id="side-svg-rays" d="" fill="url(#beam-grad-side)" opacity="0.4" class="opt-beam" />
+                            <rect id="side-svg-screen" x="0" y="0" width="6" height="0" rx="2" fill="#fff" />
+                            <g id="side-svg-proj" transform="translate(50, 250)">
+                                <rect width="40" height="20" x="-20" y="-10" rx="3" fill="var(--color-surface-high)" stroke="var(--color-outline-variant)" stroke-width="1.5" /><circle cx="15" cy="0" r="2.5" fill="var(--color-primary)" />
+                            </g>
+                            <g class="text-sm font-mono fill-neutral-500 select-none" font-weight="bold">
+                                <text id="side-lab-dist" x="250" y="480" font-size="24" font-weight="bold" text-anchor="middle" fill="var(--color-primary)">D: --m</text>
+                                <text id="side-lab-h" x="480" y="250" text-anchor="middle" fill="#fff" font-size="24" font-weight="bold">H: --m</text>
+                            </g>
+                        </svg>
+                    </div>
+                    <div class="relative bg-surface/40 border border-outline-variant/15/50 rounded-none overflow-hidden backdrop-blur-sm flex flex-col">
+                        <div class="absolute top-4 left-3 md:left-5 text-[8px] md:text-[14px] font-bold text-on-surface/80 uppercase tracking-widest z-10 drop-shadow-md whitespace-nowrap">TOP VIEW (평면도)</div>
+                        <svg id="svg-top-view" class="w-full h-full" viewBox="0 0 500 500" preserveAspectRatio="xMidYMid meet">
+                            <defs>
+                                <linearGradient id="beam-grad-top" x1="0%" y1="0%" x2="100%" y2="0%">
+                                    <stop offset="0%" stop-color="var(--color-primary)" stop-opacity="0.3" /><stop offset="100%" stop-color="var(--color-primary)" stop-opacity="0" />
+                                </linearGradient>
+                            </defs>
+                            
+                            <path id="top-svg-rays" d="" fill="url(#beam-grad-top)" opacity="0.3" class="opt-beam" />
+                            <rect id="top-svg-screen" x="0" y="0" width="0" height="6" rx="2" fill="#fff" />
+                            <g id="top-svg-proj" transform="translate(50, 250)">
+                                <rect width="40" height="20" x="-20" y="-10" rx="3" fill="var(--color-surface-high)" stroke="var(--color-outline-variant)" stroke-width="1.5" /><circle cx="15" cy="0" r="2.5" fill="var(--color-primary)" />
+                            </g>
+                            <g class="text-sm font-mono fill-neutral-500 select-none" font-weight="bold">
+                                <text id="top-lab-dist" x="250" y="480" font-size="24" font-weight="bold" text-anchor="middle" fill="var(--color-primary)">D: --m</text>
+                                <text id="top-lab-w" x="250" y="250" text-anchor="middle" fill="#fff" font-size="24" font-weight="bold">W: --m</text>
+                            </g>
+                        </svg>
+                    </div>
+                </div>
+                <!-- 3D Container -->
+                <div id="opt-container-3d" class="hidden w-full h-full flex items-center justify-center p-8 pointer-events-auto relative">
+                    <div id="opt-3d-bg" class="absolute inset-8 rounded-3xl border border-primary/30 shadow-none transition-all duration-700"></div>
+                    <div class="relative w-full h-full max-w-[1200px] max-h-[800px] flex items-center justify-center overflow-visible " style="transform-style: preserve-3d; perspective: 30000px;">
+                        <div id="scene-3d" class="relative w-full h-full preserve-3d transition-transform duration-700 ease-out" style="transform-style: preserve-3d; transform: rotateX(-25deg) rotateY(60deg);">
+                            <div class="absolute left-1/2 top-1/2 w-[6000px] h-[6000px] border border-primary/30 pointer-events-none" style="transform: translate(-50%, -50%) rotateX(90deg) translateZ(-300px); background-image: linear-gradient(to right, rgba(34, 211, 238, 0.05) 1px, transparent 1px), linear-gradient(to bottom, rgba(34, 211, 238, 0.05) 1px, transparent 1px); background-size: 200px 200px;"></div>
+                            <div id="proj-f-front" class="absolute left-1/2 top-1/2 w-[120px] h-[40px] bg-neutral-200 border-outline-variant/15 border-primary flex items-center justify-center" style="backface-visibility: hidden;"><div class="w-8 h-8 rounded-none bg-primary text-on-primary uppercase font-display"></div></div>
+                            <div id="proj-f-back" class="absolute left-1/2 top-1/2 w-[120px] h-[40px] bg-neutral-300 border border-neutral-400" style="backface-visibility: hidden;"></div>
+                            <div id="proj-f-top" class="absolute left-1/2 top-1/2 w-[80px] h-[120px] bg-neutral-200 border border-neutral-400" style="backface-visibility: hidden;"></div>
+                            <div id="proj-f-bottom" class="absolute left-1/2 top-1/2 w-[80px] h-[120px] bg-neutral-400 border border-neutral-500" style="backface-visibility: hidden;"></div>
+                            <div id="proj-f-right" class="absolute left-1/2 top-1/2 w-[80px] h-[40px] bg-neutral-300 border border-neutral-400" style="backface-visibility: hidden;"></div>
+                            <div id="proj-f-left" class="absolute left-1/2 top-1/2 w-[80px] h-[40px] bg-neutral-300 border border-neutral-400" style="backface-visibility: hidden;"></div>
+                            <div id="proj-label" class="absolute left-1/2 top-1/2 text-[14px] font-bold text-on-surface bg-neutral-900/80 px-2 rounded-none whitespace-nowrap">PRO-V PROJECTOR</div>
+                            <!-- 3D Beam (SVG triangle) -->
+                            <svg id="opt-3d-beam" class="absolute left-1/2 top-1/2 origin-left pointer-events-none" style="overflow: visible; background: transparent !important; border: none !important; box-shadow: none !important;">
+                                <polygon points="0,0 0,0 0,0" fill="rgba(34, 211, 238, 0.08)" />
+                            </svg>
+                            <div id="opt-3d-screen" class="absolute left-1/2 top-1/2 bg-white/95 border-outline-variant/15 border-primary"></div>
+                            <div id="lab-3d-w" class="absolute left-1/2 top-1/2 bg-neutral-950/90 border-outline-variant/15 border-primary text-on-surface font-bold rounded-none whitespace-nowrap origin-center transition-all duration-300" style="padding: 0.5em 1em; line-height: 1;">W: --</div>
+                            <div id="lab-3d-h" class="absolute left-1/2 top-1/2 bg-neutral-950/90 border-outline-variant/15 border-primary text-on-surface font-bold rounded-none whitespace-nowrap origin-center transition-all duration-300" style="padding: 0.5em 1em; line-height: 1;">H: --</div>
+                            <div id="lab-3d-dist" class="absolute left-1/2 top-1/2 bg-primary/20 border-outline-variant/15 border-primary text-on-surface font-bold rounded-none whitespace-nowrap origin-center transition-all duration-300" style="padding: 0.5em 1em; line-height: 1;">D: --</div>
+                        </div>
+                            </div>
+                    </div>
+                </div>
+                <!-- ^^^ This closes opt-container-3d ^^^ -->
+            </div>
+            <!-- ^^^ This closes view-optical ^^^ -->
+        
+                <!-- Global Footer Overlays -->
+                <div id="footer-mapping" class="absolute bottom-4 md:bottom-6 left-1/2 -translate-x-1/2 hidden md:flex gap-3 md:gap-4 text-[10px] font-mono z-20 pointer-events-none w-[90%] md:w-auto justify-center">
+                    <div class="bg-surface/90 border border-outline-variant/15 rounded-none px-4 py-1.5 flex items-center gap-2 backdrop-blur pointer-events-auto">
+                        <div class="w-1.5 h-1.5 rounded-none bg-primary text-on-primary uppercase font-display"></div>
+                        <span class="text-on-surface/40 uppercase tracking-tighter">Cursor:</span>
+                        <span id="txtCursor" class="text-primary w-[80px] font-bold">0, 0</span>
+                    </div>
+                    <div class="bg-surface/90 border border-outline-variant/15 rounded-none px-4 py-1.5 flex items-center gap-2 backdrop-blur pointer-events-auto">
+                        <span class="text-on-surface/40 uppercase tracking-tighter">Output Area:</span>
+                        <span id="txtOutputRes" class="text-primary font-bold">--</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Bottom Projector Spec Panel -->
+            
+        </div>
+</main>
+
+    <!-- Scripts -->
+    <script src="/js/models.js"></script>
+    <script src="/js/utils.js"></script>
+    <script src="/js/mappingEngine.js"></script>
+    <script src="/js/opticalEngine.js"></script>
+    <script src="/js/tutorialSystem.js"></script>
+    <script src="/js/main.js"></script>
+    <script src="/js/layoutManager.js"></script>
+
+    <!-- Mobile Bottom Navigation -->
+    <nav id="mobile-bottom-nav" class="md:hidden fixed bottom-0 left-0 right-0 h-[60px] bg-[#0a0a0a] border-t border-outline-variant/30 flex z-[200]">
+        <button id="mobNavSettings" onclick="document.getElementById('btnModeSettings').click()" class="flex-1 flex flex-col items-center justify-center gap-1 h-full text-primary border-t-2 border-primary mt-[-1px] bg-primary/5 transition-all">
+            <svg class="w-[22px] h-[22px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+            <span class="text-[9px] font-bold uppercase tracking-widest font-display text-current">Settings</span>
+        </button>
+        <button id="mobNavMapping" onclick="document.getElementById('btnModeMapping').click()" class="flex-1 flex flex-col items-center justify-center gap-1 h-full opacity-40 hover:opacity-100 transition-opacity">
+            <svg class="w-[22px] h-[22px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><rect width="7" height="7" x="3" y="3" rx="1"></rect><rect width="7" height="7" x="14" y="3" rx="1"></rect><rect width="7" height="7" x="14" y="14" rx="1"></rect><rect width="7" height="7" x="3" y="14" rx="1"></rect></svg>
+            <span class="text-[9px] font-bold uppercase tracking-widest font-display text-current">Mapping</span>
+        </button>
+        <button id="mobNavOptical" onclick="document.getElementById('btnModeOptical').click()" class="flex-1 flex flex-col items-center justify-center gap-1 h-full opacity-40 hover:opacity-100 transition-opacity">
+            <svg class="w-[22px] h-[22px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+            <span class="text-[9px] font-bold uppercase tracking-widest font-display text-current">Optical</span>
+        </button>
+        <button id="mobNavOutput" onclick="document.getElementById('btnModeOutput').click()" class="flex-1 flex flex-col items-center justify-center gap-1 h-full opacity-40 hover:opacity-100 transition-opacity">
+            <svg class="w-[22px] h-[22px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"></path><path d="M12 12v9"></path><path d="m8 17 4 4 4-4"></path></svg>
+            <span class="text-[9px] font-bold uppercase tracking-widest font-display text-current">Output</span>
+        </button>
+    </nav>
+
+
+
+
+<script>
+  // Sync Bottom Nav Active States
+  setInterval(() => {
+    const isSet = !document.getElementById('panel-settings').classList.contains('hidden');
+    const isMap = !document.getElementById('panel-mapping').classList.contains('hidden');
+    const isOpt = !document.getElementById('panel-optical').classList.contains('hidden');
+    const isOut = document.getElementById('panel-output') ? !document.getElementById('panel-output').classList.contains('hidden') : false;
+    
+    const setBtn = document.getElementById('mobNavSettings');
+    const mapBtn = document.getElementById('mobNavMapping');
+    const optBtn = document.getElementById('mobNavOptical');
+    const outBtn = document.getElementById('mobNavOutput');
+    
+    function makeActive(btn) {
+      if(!btn) return;
+      btn.className = "flex-1 flex flex-col items-center justify-center gap-1 h-full text-[var(--color-primary)] border-t-2 border-[var(--color-primary)] mt-[-1px] bg-primary/5 transition-all";
+    }
+    function makeInactive(btn) {
+      if(!btn) return;
+      btn.className = "flex-1 flex flex-col items-center justify-center gap-1 h-full text-on-surface/40 hover:text-on-surface/80 border-t-2 border-transparent transition-all opacity-40 hover:opacity-100";
+    }
+
+    if(isSet) { makeActive(setBtn); makeInactive(mapBtn); makeInactive(optBtn); makeInactive(outBtn); }
+    else if(isMap) { makeInactive(setBtn); makeActive(mapBtn); makeInactive(optBtn); makeInactive(outBtn); }
+    else if(isOpt) { makeInactive(setBtn); makeInactive(mapBtn); makeActive(optBtn); makeInactive(outBtn); }
+    else if(isOut) { makeInactive(setBtn); makeInactive(mapBtn); makeInactive(optBtn); makeActive(outBtn); }
+    
+  }, 100);
+</script>
+
+
+</body>
+</html>
