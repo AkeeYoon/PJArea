@@ -12,6 +12,14 @@ A modular, web-based utility designed to calculate and visualize projector displ
 
 ---
 
+### 📥 Direct Download (Portable Version)
+You can download the single-file portable version and use it immediately offline without any installation:
+- **[👉 Download PJArea_V2.0_Portable.html (Latest Release)](https://github.com/AkeeYoon/PJArea/releases/latest/download/PJArea_V2.0_Portable.html)**
+> 💡 **Tip:** If you haven't created a GitHub Release yet, you can also download the raw file from the repository:
+> [Download Raw File](https://raw.githubusercontent.com/AkeeYoon/PJArea/main/PJArea_V2.0_Portable.html) *(Right-click and select "Save Link As...")*
+
+---
+
 ## 📖 Introduction
 PJ Area V2.0 is a hybrid engine tool that helps AV engineers and system integrators accurately plan projector installations. By visualizing the physical wall size and projector throw limits, it provides an intuitive interface to configure panel settings, optical adjustments, and camera placements—all bundled into a single, portable HTML file for ease of use in the field.
 
@@ -65,6 +73,14 @@ This project is licensed under the [MIT License](LICENSE).
 프로젝터 투사 면적과 실제 벽면 크기를 직관적으로 계산하고 시각화하기 위해 설계된 모듈형 웹 유틸리티입니다. 단일 HTML 파일로 배포가 가능하여 현장에서 쉽게 사용할 수 있습니다.
 
 🌐 **언어:** [English](#english) | [한국어](#korean)
+
+---
+
+### 📥 포터블 버전 즉시 다운로드 (Portable Version)
+설치나 복잡한 개발 환경 구성 없이, 단 하나의 HTML 파일만 다운로드하여 현장에서 즉시 오프라인으로 실행할 수 있습니다:
+- **[👉 PJArea_V2.0_Portable.html 다운로드 (최신 릴리즈)](https://github.com/AkeeYoon/PJArea/releases/latest/download/PJArea_V2.0_Portable.html)**
+> 💡 **팁:** 아직 GitHub Release를 등록하지 않으셨다면, 아래 링크를 마우스 우클릭한 후 **'다른 이름으로 링크 저장...'**을 선택하여 다운로드할 수 있습니다:
+> [Raw 파일 다운로드 링크](https://raw.githubusercontent.com/AkeeYoon/PJArea/main/PJArea_V2.0_Portable.html)
 
 ---
 
