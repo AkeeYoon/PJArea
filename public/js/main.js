@@ -41,6 +41,13 @@ function init() {
         txtTrueW: document.getElementById('txtTrueW'), txtTrueH: document.getElementById('txtTrueH'),
         txtPxToMm: document.getElementById('txtPxToMm'), hdrRes: document.getElementById('hdrRes'),
         mainCanvas: document.getElementById('mainCanvas'),
+        chkInvertColors: document.getElementById('chkInvertColors'),
+        chkTransparentBg: document.getElementById('chkTransparentBg'),
+        inpBgImgUpload: document.getElementById('inpBgImgUpload'), btnBgImgUpload: document.getElementById('btnBgImgUpload'), btnBgImgClear: document.getElementById('btnBgImgClear'),
+        bgImgControls: document.getElementById('bgImgControls'),
+        inpBgImgScale: document.getElementById('inpBgImgScale'), sliderBgImgScale: document.getElementById('sliderBgImgScale'),
+        inpBgImgX: document.getElementById('inpBgImgX'), sliderBgImgX: document.getElementById('sliderBgImgX'),
+        inpBgImgY: document.getElementById('inpBgImgY'), sliderBgImgY: document.getElementById('sliderBgImgY'),
         txtCursor: document.getElementById('txtCursor'), txtOutputRes: document.getElementById('txtOutputRes'),
         inpProjName: document.getElementById('inpProjName'),
         axisLockRadios: document.getElementsByName('axisLock'),
@@ -247,6 +254,7 @@ function init() {
             drawProjInfo: ui.chkProjInfo ? ui.chkProjInfo.checked : true,
             drawQuickPattern: ui.chkQuickPattern ? ui.chkQuickPattern.checked : false,
             drawColorGrid: ui.chkColorGrid ? ui.chkColorGrid.checked : false,
+            transparentBg: ui.chkTransparentBg ? ui.chkTransparentBg.checked : false,
             gridThin: parseFloat(document.getElementById('inpGridThin')?.value) || 1,
             gridThick: parseFloat(document.getElementById('inpGridThick')?.value) || 2,
             drawBlend: ui.chkExportBlend ? ui.chkExportBlend.checked : true,
@@ -255,7 +263,12 @@ function init() {
             customSvgImage: window.customSvgImage,
             svgScale: ui.inpSvgScale ? parseFloat(ui.inpSvgScale.value)/100 : 1,
             svgX: ui.inpSvgX ? parseFloat(ui.inpSvgX.value) : 0,
-            svgY: ui.inpSvgY ? parseFloat(ui.inpSvgY.value) : 0
+            svgY: ui.inpSvgY ? parseFloat(ui.inpSvgY.value) : 0,
+            invertColors: ui.chkInvertColors ? ui.chkInvertColors.checked : false,
+            customBgImage: window.customBgImage,
+            bgScale: ui.inpBgImgScale ? parseFloat(ui.inpBgImgScale.value)/100 : 1,
+            bgX: ui.inpBgImgX ? parseFloat(ui.inpBgImgX.value) : 0,
+            bgY: ui.inpBgImgY ? parseFloat(ui.inpBgImgY.value) : 0
         });
         ui.sliderOx.max = Math.round(W);
         ui.sliderOy.max = Math.round(H);
@@ -313,9 +326,19 @@ function init() {
     ui.axisLockRadios.forEach(r => r.addEventListener('change', autoFitTargetAxis));
     ui.P.addEventListener('input', () => { if (getLockedAxis() === 'X') autoFitTargetAxis(); else { calcTotalX(); recalcAll(); } });
     ui.R.addEventListener('input', () => { if (getLockedAxis() === 'Y') autoFitTargetAxis(); else { calcTotalY(); recalcAll(); } });
+
+    const btnDecP = document.getElementById('btnDecP');
+    const btnIncP = document.getElementById('btnIncP');
+    const btnDecR = document.getElementById('btnDecR');
+    const btnIncR = document.getElementById('btnIncR');
+    
+    if (btnDecP) btnDecP.addEventListener('click', () => { ui.P.value = Math.max(1, parseInt(ui.P.value) - 1); ui.P.dispatchEvent(new Event('input')); });
+    if (btnIncP) btnIncP.addEventListener('click', () => { ui.P.value = parseInt(ui.P.value) + 1; ui.P.dispatchEvent(new Event('input')); });
+    if (btnDecR) btnDecR.addEventListener('click', () => { ui.R.value = Math.max(1, parseInt(ui.R.value) - 1); ui.R.dispatchEvent(new Event('input')); });
+    if (btnIncR) btnIncR.addEventListener('click', () => { ui.R.value = parseInt(ui.R.value) + 1; ui.R.dispatchEvent(new Event('input')); });
     ui.sliderOx.addEventListener('input', () => { calcTotalX(); recalcAll(); });
     ui.sliderOy.addEventListener('input', () => { calcTotalY(); recalcAll(); });
-    [ui.chkCircles, ui.chkGrid, ui.chkProjInfo, ui.chkColorGrid, ui.chkQuickPattern, ui.chkExportBlend].forEach(el => { if(el) el.addEventListener('change', recalcAll); });
+    [ui.chkCircles, ui.chkGrid, ui.chkProjInfo, ui.chkColorGrid, ui.chkQuickPattern, ui.chkExportBlend, ui.chkInvertColors, ui.chkTransparentBg].forEach(el => { if(el) el.addEventListener('change', recalcAll); });
     
     let prevQuickPatternState = { blend: true, info: true, colorGrid: false };
 
@@ -392,21 +415,23 @@ function init() {
     }
 
     let isDraggingSvg = false;
+    let isDraggingBgImg = false;
     let dragStartX = 0;
     let dragStartY = 0;
     let svgInitialX = 0;
     let svgInitialY = 0;
+    let bgImgInitialX = 0;
+    let bgImgInitialY = 0;
 
     ui.mainCanvas.addEventListener('mousedown', (e) => {
-        if (!window.customSvgImage || ui.svgControls.classList.contains('hidden')) return;
-        
         let coords = getCanvasCoords(e, ui.mainCanvas);
+        let curPxX = coords.curX;
+        let curPxY = coords.curY;
+        
+        if (window.customSvgImage && !ui.svgControls.classList.contains('hidden')) {
         let wallW = val(ui.wallW) || 1;
         let trueW = parseInt(ui.txtTrueW.innerText) || coords.tw;
         let mmToPx = (wallW > 0) ? (trueW / wallW) : 1;
-        
-        let curPxX = coords.curX;
-        let curPxY = coords.curY;
         
         let svgX = parseFloat(ui.inpSvgX.value) || 0;
         let svgY = parseFloat(ui.inpSvgY.value) || 0;
@@ -422,6 +447,24 @@ function init() {
             dragStartY = curPxY;
             svgInitialX = svgX;
             svgInitialY = svgY;
+            return;
+        }
+        }
+
+        if (window.customBgImage && !ui.bgImgControls.classList.contains('hidden')) {
+            let bgX = parseFloat(ui.inpBgImgX.value) || 0;
+            let bgY = parseFloat(ui.inpBgImgY.value) || 0;
+            let bgScale = (parseFloat(ui.inpBgImgScale.value) || 100) / 100;
+            let bgPxW = (window.customBgImageBaseW || 0) * bgScale;
+            let bgPxH = (window.customBgImageBaseH || 0) * bgScale;
+            
+            if (curPxX >= bgX && curPxX <= bgX + bgPxW && curPxY >= bgY && curPxY <= bgY + bgPxH) {
+                isDraggingBgImg = true;
+                dragStartX = curPxX;
+                dragStartY = curPxY;
+                bgImgInitialX = bgX;
+                bgImgInitialY = bgY;
+            }
         }
     });
 
@@ -496,10 +539,24 @@ function init() {
             ui.inpSvgY.value = Math.round(newY);
             recalcAll();
         }
+
+        if (isDraggingBgImg) {
+            let curPxX = coords.curX;
+            let curPxY = coords.curY;
+            
+            let newX = bgImgInitialX + (curPxX - dragStartX);
+            let newY = bgImgInitialY + (curPxY - dragStartY);
+            
+            ui.inpBgImgX.value = Math.round(newX);
+            ui.inpBgImgY.value = Math.round(newY);
+            if (ui.sliderBgImgX) ui.sliderBgImgX.value = Math.round(newX);
+            if (ui.sliderBgImgY) ui.sliderBgImgY.value = Math.round(newY);
+            recalcAll();
+        }
     });
     
-    ui.mainCanvas.addEventListener('mouseup', () => { isDraggingSvg = false; });
-    ui.mainCanvas.addEventListener('mouseleave', () => { ui.txtCursor.textContent = '0, 0'; isDraggingSvg = false; });
+    ui.mainCanvas.addEventListener('mouseup', () => { isDraggingSvg = false; isDraggingBgImg = false; });
+    ui.mainCanvas.addEventListener('mouseleave', () => { ui.txtCursor.textContent = '0, 0'; isDraggingSvg = false; isDraggingBgImg = false; });
     
     window.customSvgImage = null;
     
@@ -695,11 +752,110 @@ function init() {
         attachSync(ui.inpSvgX, ui.sliderSvgX);
         attachSync(ui.inpSvgY, ui.sliderSvgY);
         
+        window.customBgImage = null;
+        if (ui.btnBgImgUpload && ui.inpBgImgUpload) {
+            ui.btnBgImgUpload.addEventListener('click', () => { ui.inpBgImgUpload.click(); });
+            ui.inpBgImgUpload.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        window.customBgImage = img;
+                        window.customBgImageBaseW = img.naturalWidth || img.width;
+                        window.customBgImageBaseH = img.naturalHeight || img.height;
+                        if (ui.inpBgImgScale) ui.inpBgImgScale.value = 100;
+                        if (ui.sliderBgImgScale) ui.sliderBgImgScale.value = 100;
+                        if (ui.inpBgImgX) ui.inpBgImgX.value = 0;
+                        if (ui.sliderBgImgX) ui.sliderBgImgX.value = 0;
+                        if (ui.inpBgImgY) ui.inpBgImgY.value = 0;
+                        if (ui.sliderBgImgY) ui.sliderBgImgY.value = 0;
+                        ui.btnBgImgClear.classList.remove('hidden');
+                        if (ui.bgImgControls) {
+                            ui.bgImgControls.classList.remove('hidden');
+                            ui.bgImgControls.classList.add('flex');
+                        }
+                        recalcAll();
+                    };
+                    img.src = event.target.result;
+                };
+                reader.readAsDataURL(file);
+            });
+            ui.btnBgImgClear.addEventListener('click', () => {
+                window.customBgImage = null;
+                ui.btnBgImgClear.classList.add('hidden');
+                if (ui.bgImgControls) {
+                    ui.bgImgControls.classList.add('hidden');
+                    ui.bgImgControls.classList.remove('flex');
+                }
+                ui.inpBgImgUpload.value = '';
+                recalcAll();
+            });
+        }
+        
+        attachSync(ui.inpBgImgScale, ui.sliderBgImgScale);
+        attachSync(ui.inpBgImgX, ui.sliderBgImgX);
+        attachSync(ui.inpBgImgY, ui.sliderBgImgY);
+
         if(ui.inpProjName) {
             ui.inpProjName.addEventListener('input', (e) => {
                 syncAndRecalc();
             });
         }
+    }
+
+    // Quick Grid Logic
+    const btnQuickGridModal = document.getElementById('btnQuickGridModal');
+    const modalQuickGrid = document.getElementById('modal-quick-grid');
+    const btnCloseQuickGrid = document.getElementById('btn-close-quick-grid');
+    const btnCancelQuickGrid = document.getElementById('btn-cancel-quick-grid');
+    const btnExportQuickGrid = document.getElementById('btn-export-quick-grid');
+    
+    if (btnQuickGridModal && modalQuickGrid) {
+        btnQuickGridModal.addEventListener('click', () => {
+            modalQuickGrid.classList.remove('hidden');
+            modalQuickGrid.classList.add('flex');
+            setTimeout(() => {
+                modalQuickGrid.classList.remove('opacity-0');
+                modalQuickGrid.firstElementChild.classList.remove('scale-95');
+                modalQuickGrid.firstElementChild.classList.add('scale-100');
+            }, 10);
+        });
+
+        const closeQuickGrid = () => {
+            modalQuickGrid.classList.add('opacity-0');
+            modalQuickGrid.firstElementChild.classList.add('scale-95');
+            modalQuickGrid.firstElementChild.classList.remove('scale-100');
+            setTimeout(() => {
+                modalQuickGrid.classList.add('hidden');
+                modalQuickGrid.classList.remove('flex');
+            }, 300);
+        };
+
+        btnCloseQuickGrid.addEventListener('click', closeQuickGrid);
+        btnCancelQuickGrid.addEventListener('click', closeQuickGrid);
+
+        btnExportQuickGrid.addEventListener('click', () => {
+            const w = parseInt(document.getElementById('inpQG-resW').value) || 1920;
+            const h = parseInt(document.getElementById('inpQG-resH').value) || 1080;
+            const invert = document.getElementById('chkQG-invert').checked;
+            const transparent = document.getElementById('chkQG-transparent').checked;
+            const colorGrid = document.getElementById('chkQG-colorgrid') ? document.getElementById('chkQG-colorgrid').checked : false;
+            
+            mappingEngine.render({
+                TW: w, TH: h, TrueW: w, TrueH: h,
+                W: w, H: h, P: 1, R: 1, Ox: 0, Oy: 0,
+                drawGrid: true, drawCircles: true, drawBlend: false, drawColorGrid: colorGrid, drawProjInfo: false,
+                invertColors: invert,
+                transparentBg: transparent
+            });
+            
+            mappingExporter.exportImage(mappingEngine.canvas, w, h);
+            
+            recalcAll();
+            closeQuickGrid();
+        });
     }
 
     ui.exportBtn.addEventListener('click', () => {
@@ -1264,6 +1420,7 @@ function init() {
     if (canvasWrapper) {
         // Panning
         canvasWrapper.addEventListener('mousedown', (e) => {
+            if (isDraggingSvg || isDraggingBgImg) return;
             isPanning = true;
             startX = e.clientX - wrapTx;
             startY = e.clientY - wrapTy;
@@ -1296,6 +1453,7 @@ function init() {
         let initialPinchDist = null;
         let initialScale = 1;
         canvasWrapper.addEventListener('touchstart', (e) => {
+            if (isDraggingSvg || isDraggingBgImg) return;
             canvasWrapper.classList.remove('transition-transform', 'duration-75');
             if (e.touches.length === 1) {
                 isPanning = true;
